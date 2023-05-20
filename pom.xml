@@ -3,32 +3,32 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>net.clojars.fr33m0nk</groupId>
   <artifactId>clj-bucket4j</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.1.0</version>
   <name>fr33m0nk/clj-bucket4j</name>
-  <description>FIXME: my new library.</description>
+  <description>Clojure wrapper for Bucket4J rate-limiting library based on token-bucket algorithm.</description>
   <url>https://github.com/fr33m0nk/clj-bucket4j</url>
   <licenses>
     <license>
-      <name>Eclipse Public License</name>
-      <url>http://www.eclipse.org/legal/epl-v10.html</url>
+      <name>MIT License</name>
+      <url>https://github.com/fr33m0nk/clj-bucket4j/blob/main/LICENSE</url>
     </license>
   </licenses>
   <developers>
     <developer>
-      <name>Prashantsinha</name>
+      <name>Prashant Sinha</name>
     </developer>
   </developers>
   <scm>
     <url>https://github.com/fr33m0nk/clj-bucket4j</url>
     <connection>scm:git:git://github.com/fr33m0nk/clj-bucket4j.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/fr33m0nk/clj-bucket4j.git</developerConnection>
-    <tag>v0.1.0-SNAPSHOT</tag>
+    <tag>v0.1.0</tag>
   </scm>
   <dependencies>
     <dependency>
-      <groupId>org.clojure</groupId>
-      <artifactId>clojure</artifactId>
-      <version>1.11.1</version>
+      <groupId>com.bucket4j</groupId>
+      <artifactId>bucket4j-core</artifactId>
+      <version>8.3.0</version>
     </dependency>
   </dependencies>
   <build>

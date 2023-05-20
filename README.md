@@ -26,4 +26,4 @@ Or in your namespace as:
 
 Copyright © 2023 Prashant Sinha
 
-Distributed under the Eclipse Public License version 1.0.
+Distributed under the MIT License.

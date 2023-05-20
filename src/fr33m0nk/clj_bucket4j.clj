@@ -62,6 +62,7 @@
     (.build this)))
 
 (defn bucket-builder
+  "returns new builder instance for customizing Bucket"
   []
   (Bucket/builder))
 
