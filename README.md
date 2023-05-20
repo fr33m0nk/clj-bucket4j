@@ -1,7 +1,7 @@
 # fr33m0nk/clj-bucket4j
 
 `clj-bucket4j` is a a simple library that wraps over [Bucket4J](https://github.com/bucket4j/bucket4j/) and offers convenience methods for easy implementation in Clojure code.
-For further documentation, do refer [Bucket4J officiaal docs](https://bucket4j.com/).
+For further documentation, do refer [Bucket4J official docs](https://bucket4j.com/).
 
 [![Clojars Project](https://img.shields.io/clojars/v/net.clojars.fr33m0nk/clj-bucket4j.svg)](https://clojars.org/net.clojars.fr33m0nk/clj-bucket4j)
 ## Usage
