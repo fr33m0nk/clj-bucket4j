@@ -57,7 +57,7 @@ implementation("net.clojars.fr33m0nk:clj-bucket4j:0.1.0")
   ;; If a token is not available this method will block until the refill adds one to the bucket.
   (b4j/block-and-consume bucket 1)
   
-  (swap! exchange-rate (poll-exchange-rate)))
+  (swap! exchange-rate #(identity %2) (poll-exchange-rate)))
   
 ```
 
