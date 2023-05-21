@@ -46,8 +46,8 @@ implementation("net.clojars.fr33m0nk:clj-bucket4j:0.1.0")
 
 ;; construct the bucket
 (def bucket (-> (b4j/bucket-builder)
-                 (b4j/add-limit simple-bandwidth)
-                 (b4j/build)))
+                (b4j/add-limit simple-bandwidth)
+                (b4j/build)))
                  
 (def exchange-rates (atom 0.0))                 
 
