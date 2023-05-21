@@ -31,14 +31,34 @@ net.clojars.fr33m0nk/clj-bucket4j {:mvn/version "0.1.0"}
 implementation("net.clojars.fr33m0nk:clj-bucket4j:0.1.0")
 ```
 
-### Require at the REPL with:
+### Example usage as a [throttler](https://bucket4j.com/8.3.0/toc.html#using-bucket-as-throttler)
+
+#### Require at the REPL with:
 ```clojure
 (require '[fr33m0nk.clj-bucket4j :as b4j])
 ```
-### or  in your namespace as:
+
+> Suppose you need to have a fresh exchange rate between dollars and euros. To get the rate you continuously poll the third-party provider, and by contract with the provider you should poll not often than 100 times per 1 minute, else provider will block your IP:
+
 ```clojure
-(ns mynamespace
-  (:require [fr33m0nk.clj-bucket4j :as b4j]))
+;; define the limit 100 times per 1 minute
+(def simple-bandwidth (b4j/simple-bandwidth 100 60000))
+
+;; construct the bucket
+(def bucket (-> (b4j/bucket-builder)
+                 (b4j/add-limit simple-bandwidth)
+                 (b4j/build)))
+                 
+(def exchange-rates (atom 0.0))                 
+
+;; do polling in infinite loop
+(while true
+  ;; Consume a token from the token bucket.
+  ;; If a token is not available this method will block until the refill adds one to the bucket.
+  (b4j/block-and-consume bucket 1)
+  
+  (swap! exchange-rate (poll-exchange-rate)))
+  
 ```
 
 ## License
