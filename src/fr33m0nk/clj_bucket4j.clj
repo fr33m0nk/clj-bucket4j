@@ -45,14 +45,15 @@
 (defprotocol IBuilder
   (build
     [bucket-builder]
-    [remote-bucket-builder ^String key ^BucketConfiguration bucket-configuration]))
+    [remote-bucket-builder ^String key ^BucketConfiguration bucket-configuration]
+    "Builds builder instance to concrete object"))
 
 (defprotocol IBucketBuilder
-  (add-limit [bucket-builder ^Bandwidth bandwidth])
-  (with-nano-second-precision [bucket-builder])
-  (with-milli-second-precision [bucket-builder])
-  (with-custom-time-precision [bucket-builder ^TimeMeter custom-time-meter])
-  (with-synchronization-strategy [bucket-builder ^SynchronizationStrategy synchronization-strategy]))
+  (add-limit [bucket-builder ^Bandwidth bandwidth] "Adds limit to Builder object of LocalBucketBuilder or ConfigurationBuilder")
+  (with-nano-second-precision [bucket-builder] "Sets nanosecond precision for Builder object of LocalBucketBuilder")
+  (with-milli-second-precision [bucket-builder] "Sets millisecond precision for Builder object of LocalBucketBuilder")
+  (with-custom-time-precision [bucket-builder ^TimeMeter custom-time-meter] "Sets custom time precision for Builder object of LocalBucketBuilder using supplied TimeMeter object")
+  (with-synchronization-strategy [bucket-builder ^SynchronizationStrategy synchronization-strategy] "Sets Synchronization for Builder object of LocalBucketBuilder using supplied SynchronizationStrategy object"))
 
 (extend-type LocalBucketBuilder
   IBucketBuilder
@@ -260,9 +261,9 @@
     (.build this)))
 
 (defprotocol IRemoteBucketBuilder
-  (with-recovery-strategy [remote-bucket-builder ^RecoveryStrategy recovery-strategy])
-  (with-optimization [remote-bucket-builder ^Optimization optimization])
-  (with-implicit-configuration-replacement [remote-bucket-builder ^long desired-configuration-revision ^TokensInheritanceStrategy token-inheritance-strategy]))
+  (with-recovery-strategy [remote-bucket-builder ^RecoveryStrategy recovery-strategy] "Recovery strategy for RemoteBucketBuilder")
+  (with-optimization [remote-bucket-builder ^Optimization optimization] "Optimization strategy for RemoteBucketBuilder")
+  (with-implicit-configuration-replacement [remote-bucket-builder ^long desired-configuration-revision ^TokensInheritanceStrategy token-inheritance-strategy] "Configuration replacement strategy for RemoteBucketBuilder"))
 
 (extend-type RemoteBucketBuilder
   IRemoteBucketBuilder
@@ -283,8 +284,8 @@
   (BucketConfiguration/builder))
 
 (defprotocol ICompareAndSwapBasedProxyManager
-  (get-remote-bucket-builder [proxy-manager])
-  (get-proxy-configuration [proxy-manager bucket-key]))
+  (get-remote-bucket-builder [proxy-manager] "Returns RemoteBucketBuilder instance from AbstractCompareAndSwapBasedProxyManager")
+  (get-proxy-configuration [proxy-manager bucket-key]) "Returns BucketConfiguration for provided key from AbstractCompareAndSwapBasedProxyManager")
 
 (extend-type AbstractCompareAndSwapBasedProxyManager
   ICompareAndSwapBasedProxyManager
