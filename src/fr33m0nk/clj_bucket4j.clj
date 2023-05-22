@@ -1,5 +1,5 @@
 (ns fr33m0nk.clj-bucket4j
-  (:import (io.github.bucket4j Bandwidth BlockingBucket BlockingStrategy Bucket ConsumptionProbe Refill SchedulingBucket TimeMeter UninterruptibleBlockingStrategy)
+  (:import (io.github.bucket4j Bandwidth BlockingBucket BlockingStrategy Bucket ConsumptionProbe Refill SchedulingBucket TimeMeter UninterruptibleBlockingStrategy VerboseBucket VerboseResult)
            (io.github.bucket4j.local LocalBucketBuilder SynchronizationStrategy)
            (java.time Duration Instant)
            (java.util.concurrent ScheduledExecutorService)))
@@ -68,6 +68,8 @@
 
 (defprotocol IBucket
   (as-blocking [bucket] "Returns the blocking API for this bucket, that provides operations which are able to block caller thread in case of lack of tokens")
+  (as-scheduler [bucket] "Returns the Scheduler API for this bucket")
+  (as-verbose [bucket] "Returns the Verbose API for this bucket")
   (try-consume [bucket token-quantity] "Tries to consume a specified number of tokens from this bucket")
   (block-and-consume [bucket token-quantity] "Tries to consume a specified number using blocking API")
   (consume-ignoring-rate-limits [bucket token-quantity] "Consumes {@code token-quantity} from bucket ignoring all limits")
@@ -105,10 +107,10 @@
     "Tries to consume the specified number of tokens from the bucket"))
 
 (defprotocol IConsumptionProbe
-  (consumed? [consumption-probe])
-  (get-remaining-tokens [consumption-probe])
-  (get-nanos-to-wait-for-refill [consumption-probe])
-  (get-nanos-to-wait-for-reset [consumption-probe]))
+  (consumed? [consumption-probe] "Returns Boolean from ConsumptionProbe indicating whether consumption was a success")
+  (get-remaining-tokens [consumption-probe] "Returns remaining tokens from ConsumptionProbe after consumption")
+  (get-nanos-to-wait-for-refill [consumption-probe] "Returns Nano seconds to wait from ConsumptionProbe for a complete refill")
+  (get-nanos-to-wait-for-reset [consumption-probe] "Returns Nano seconds to wait from ConsumptionProbe for a complete reset"))
 
 (extend-type ConsumptionProbe
   IConsumptionProbe
@@ -125,6 +127,10 @@
   IBucket
   (as-blocking [this]
     (.asBlocking this))
+  (as-scheduler [this]
+    (.asScheduler this))
+  (as-verbose [this]
+    (.asVerbose this))
   (try-consume [this token-quantity]
     (.tryConsume this token-quantity))
   (block-and-consume [this token-quantity]
@@ -178,3 +184,59 @@
     (.tryConsume this ^long token-quantity (Duration/ofMillis max-wait-time-ms) scheduler))
   (consume-scheduling-bucket [this token-quantity ^ScheduledExecutorService scheduler]
     (.consume this token-quantity scheduler)))
+
+(extend-type VerboseBucket
+  IBucket
+  (try-consume [this token-quantity]
+    (.tryConsume this token-quantity))
+  (block-and-consume [this token-quantity]
+    (-> this as-blocking (consume-blocking-bucket token-quantity)))
+  (consume-ignoring-rate-limits [this token-quantity]
+    (.consumeIgnoringRateLimits this token-quantity))
+  (add-tokens [this token-quantity]
+    (.addTokens this token-quantity))
+  (force-add-tokens [this token-quantity]
+    (.forceAddTokens this token-quantity))
+  (try-consuming-and-return-remaining [this token-quantity]
+    (.tryConsumeAndReturnRemaining this token-quantity))
+  (estimate-ability-to-consume [this token-quantity]
+    (.estimateAbilityToConsume this token-quantity))
+  (try-consume-as-much-as-possible
+    ([this]
+     (.tryConsumeAsMuchAsPossible this))
+    ([this token-quantity]
+     (.tryConsumeAsMuchAsPossible this token-quantity)))
+  (reset [this]
+    (.reset this))
+  (get-available-token-count [this]
+    (.getAvailableTokens this)))
+
+(defprotocol IVerboseResult
+  (get-value [verbose-result] "Value from VerboseResult")
+  (get-configuration [verbose-result] "BucketConfiguration Object from VerboseResult")
+  (get-state [verbose-result] "BucketState Object from VerboseResult")
+  (get-operation-time-nanos [verbose-result] "Operation time from VerboseResult")
+  (get-diagnostics [verbose-result] "Diagnostics map from VerboseResult")
+  (get-verbose-result-map [verbose-result] "VerboseResult as a map"))
+
+(extend-type VerboseResult
+  IVerboseResult
+  (get-value [this]
+    (.getValue this))
+  (get-configuration [this]
+    (.getConfiguration this))
+  (get-state [this]
+    (.getState this))
+  (get-operation-time-nanos [this]
+    (.getOperationTimeNanos this))
+  (get-diagnostics [this]
+    (let [diagnostics (.getDiagnostics this)]
+      {:full-refilling-time-nanos (.calculateFullRefillingTime diagnostics)
+       :available-tokens (.getAvailableTokens diagnostics)
+       :available-tokens-per-bandwidth (vec (.getAvailableTokensPerEachBandwidth diagnostics))}))
+  (get-verbose-result-map [this]
+    {:value (get-value this)
+     :configuration (get-configuration this)
+     :state (get-state this)
+     :operation-time-nanos (get-operation-time-nanos this)
+     :diagnostics (get-diagnostics this)}))
