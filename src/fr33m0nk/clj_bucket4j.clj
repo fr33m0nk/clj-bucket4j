@@ -285,7 +285,7 @@
 
 (defprotocol ICompareAndSwapBasedProxyManager
   (get-remote-bucket-builder [proxy-manager] "Returns RemoteBucketBuilder instance from AbstractCompareAndSwapBasedProxyManager")
-  (get-proxy-configuration [proxy-manager bucket-key]) "Returns BucketConfiguration for provided key from AbstractCompareAndSwapBasedProxyManager")
+  (get-proxy-configuration [proxy-manager bucket-key] "Returns BucketConfiguration for provided key from AbstractCompareAndSwapBasedProxyManager"))
 
 (extend-type AbstractCompareAndSwapBasedProxyManager
   ICompareAndSwapBasedProxyManager
