@@ -6,7 +6,8 @@
            (io.github.bucket4j.local LocalBucketBuilder SynchronizationStrategy)
            (java.time Duration Instant)
            (java.util Optional)
-           (java.util.concurrent ScheduledExecutorService)))
+           (java.util.concurrent ScheduledExecutorService)
+           (java.util.function Supplier)))
 
 (defn simple-bandwidth
   ([capacity interval-ms]
@@ -45,7 +46,7 @@
 (defprotocol IBuilder
   (build
     [bucket-builder]
-    [remote-bucket-builder ^String key ^BucketConfiguration bucket-configuration]
+    [remote-bucket-builder ^String key bucket-configuration-or-supplier]
     "Builds builder instance to concrete object"))
 
 (defprotocol IBucketBuilder
@@ -274,8 +275,10 @@
   (with-implicit-configuration-replacement [this ^long desired-configuration-revision ^TokensInheritanceStrategy token-inheritance-strategy]
     (.withImplicitConfigurationReplacement this desired-configuration-revision token-inheritance-strategy))
   IBuilder
-  (build [this ^String key ^BucketConfiguration bucket-configuration]
-    (.build this key bucket-configuration)))
+  (build [this ^String key bucket-configuration-or-supplier]
+    (condp instance? bucket-configuration-or-supplier
+      BucketConfiguration (.build this key ^BucketConfiguration bucket-configuration-or-supplier)
+      Supplier (.build this key ^Supplier bucket-configuration-or-supplier))))
 
 (defn bucket-configuration-builder
   "returns new Bucket Configuration Builder instance for customizing Bucket Configuration"
