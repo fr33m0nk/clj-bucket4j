@@ -1,7 +1,11 @@
 (ns fr33m0nk.clj-bucket4j
-  (:import (io.github.bucket4j Bandwidth BlockingBucket BlockingStrategy Bucket ConsumptionProbe Refill SchedulingBucket TimeMeter UninterruptibleBlockingStrategy VerboseBucket VerboseResult)
+  (:import (io.github.bucket4j Bandwidth BlockingBucket BlockingStrategy Bucket BucketConfiguration ConfigurationBuilder ConsumptionProbe Refill SchedulingBucket TimeMeter TokensInheritanceStrategy UninterruptibleBlockingStrategy VerboseBucket VerboseResult)
+           (io.github.bucket4j.distributed.proxy RecoveryStrategy RemoteBucketBuilder)
+           (io.github.bucket4j.distributed.proxy.generic.compare_and_swap AbstractCompareAndSwapBasedProxyManager)
+           (io.github.bucket4j.distributed.proxy.optimization Optimization)
            (io.github.bucket4j.local LocalBucketBuilder SynchronizationStrategy)
            (java.time Duration Instant)
+           (java.util Optional)
            (java.util.concurrent ScheduledExecutorService)))
 
 (defn simple-bandwidth
@@ -38,16 +42,20 @@
   [token-quantity interval-ms ^Instant time-of-first-refill use-adaptive-initial-tokens?]
   (Refill/intervallyAligned token-quantity (Duration/ofMillis interval-ms) time-of-first-refill use-adaptive-initial-tokens?))
 
-(defprotocol ILocalBucketBuilder
+(defprotocol IBuilder
+  (build
+    [bucket-builder]
+    [remote-bucket-builder ^String key ^BucketConfiguration bucket-configuration]))
+
+(defprotocol IBucketBuilder
   (add-limit [bucket-builder ^Bandwidth bandwidth])
   (with-nano-second-precision [bucket-builder])
   (with-milli-second-precision [bucket-builder])
   (with-custom-time-precision [bucket-builder ^TimeMeter custom-time-meter])
-  (with-synchronization-strategy [bucket-builder ^SynchronizationStrategy synchronization-strategy])
-  (build [bucket-builder]))
+  (with-synchronization-strategy [bucket-builder ^SynchronizationStrategy synchronization-strategy]))
 
 (extend-type LocalBucketBuilder
-  ILocalBucketBuilder
+  IBucketBuilder
   (add-limit [this bandwidth]
     (.addLimit this bandwidth))
   (with-nano-second-precision [this]
@@ -58,11 +66,13 @@
     (.withCustomTimePrecision this custom-time-meter))
   (with-synchronization-strategy [this synchronization-strategy]
     (.withSynchronizationStrategy this synchronization-strategy))
+  IBuilder
   (build [this]
     (.build this)))
 
 (defn bucket-builder
   "returns new builder instance for customizing Bucket"
+  ^LocalBucketBuilder
   []
   (Bucket/builder))
 
@@ -240,3 +250,46 @@
      :state (get-state this)
      :operation-time-nanos (get-operation-time-nanos this)
      :diagnostics (get-diagnostics this)}))
+
+(extend-type ConfigurationBuilder
+  IBucketBuilder
+  (add-limit [this ^Bandwidth bandwidth]
+    (.addLimit this bandwidth))
+  IBuilder
+  (build [this]
+    (.build this)))
+
+(defprotocol IRemoteBucketBuilder
+  (with-recovery-strategy [remote-bucket-builder ^RecoveryStrategy recovery-strategy])
+  (with-optimization [remote-bucket-builder ^Optimization optimization])
+  (with-implicit-configuration-replacement [remote-bucket-builder ^long desired-configuration-revision ^TokensInheritanceStrategy token-inheritance-strategy]))
+
+(extend-type RemoteBucketBuilder
+  IRemoteBucketBuilder
+  (with-recovery-strategy [this ^RecoveryStrategy recovery-strategy]
+    (.withRecoveryStrategy this recovery-strategy))
+  (with-optimization [this ^Optimization optimization]
+    (.withOptimization this optimization))
+  (with-implicit-configuration-replacement [this ^long desired-configuration-revision ^TokensInheritanceStrategy token-inheritance-strategy]
+    (.withImplicitConfigurationReplacement this desired-configuration-revision token-inheritance-strategy))
+  IBuilder
+  (build [this ^String key ^BucketConfiguration bucket-configuration]
+    (.build this key bucket-configuration)))
+
+(defn bucket-configuration-builder
+  "returns new Bucket Configuration Builder instance for customizing Bucket Configuration"
+  ^ConfigurationBuilder
+  []
+  (BucketConfiguration/builder))
+
+(defprotocol ICompareAndSwapBasedProxyManager
+  (get-remote-bucket-builder [proxy-manager])
+  (get-proxy-configuration [proxy-manager bucket-key]))
+
+(extend-type AbstractCompareAndSwapBasedProxyManager
+  ICompareAndSwapBasedProxyManager
+  (get-remote-bucket-builder [this]
+    (.builder this))
+  (get-proxy-configuration [this bucket-key]
+    (let [^Optional proxy-configuration (.getProxyConfiguration this bucket-key)]
+      (.orElse proxy-configuration nil))))
