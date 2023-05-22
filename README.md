@@ -12,23 +12,23 @@ Add the following to your project dependencies:
 
 - CLI/deps.edn dependency information
 ```
-net.clojars.fr33m0nk/clj-bucket4j {:mvn/version "0.1.2"}
+net.clojars.fr33m0nk/clj-bucket4j {:mvn/version "0.1.3"}
 ```
 - Leningen/Boot
 ```
-[net.clojars.fr33m0nk/clj-bucket4j "0.1.2"]
+[net.clojars.fr33m0nk/clj-bucket4j "0.1.3"]
 ```
 - Maven
 ```xml
 <dependency>
   <groupId>net.clojars.fr33m0nk</groupId>
   <artifactId>clj-bucket4j</artifactId>
-  <version>0.1.2</version>
+  <version>0.1.3</version>
 </dependency>
 ```
 - Gradle
 ```groovy
-implementation("net.clojars.fr33m0nk:clj-bucket4j:0.1.2")
+implementation("net.clojars.fr33m0nk:clj-bucket4j:0.1.3")
 ```
 
 ### Example usages
