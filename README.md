@@ -96,7 +96,7 @@ implementation("net.clojars.fr33m0nk:clj-bucket4j:0.1.4")
 ;; do polling in infinite loop
 (while true
   ;; Consume a token from the token bucket.
-  ;; If a token is not available this function will block until the refill adds one to the bucket.
+  ;; If a token is not available this function will park the thread until the refill adds one to the bucket.
   (b4j/block-and-consume bucket 1)
   
   (swap! exchange-rate #(identity %2) (poll-exchange-rate)))
